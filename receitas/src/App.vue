@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app style="background-color: #224224; color: white;">
     <Navbar />
     <v-main>
       <AboutUs />
@@ -30,7 +30,7 @@ export default {
 </script>
 
 <style>
-body {
-  background-color: #e8f5e9;
+.app {
+  background-color: #224224;
 }
 </style>

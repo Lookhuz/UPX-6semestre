@@ -11,6 +11,7 @@ import { VCalendar } from 'vuetify/labs/VCalendar'
 
 const vuetify = createVuetify({
     components: {
+        ...components,
         VCalendar,
     },
     directives,
