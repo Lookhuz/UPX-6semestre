@@ -112,20 +112,32 @@
               </template>
               <v-date-picker
                 v-model="dataPlantioUsuario"
-                :min="today"
+
                 @click:date="menu = false"
               ></v-date-picker>
             </v-menu>
-            <div class="text-subtitle-1">
+            <div class="text-subtitle-1 d-flex flex-column align-center">
               <span v-if="dataPlantioUsuario && selectedPlantio" class="text-h5">
                 <strong class="font-weight-bold">Você poderá colher entre:</strong>
                 {{ formatDate(new Date(dataPlantioUsuario)) }} e {{ formatDate(new Date(selectedPlantio.data_colheita)) }}
               </span>
+              <v-btn color="primary" class="mt-5" :disabled="!dataPlantioUsuario" @click="criarColheita">Criar colheita</v-btn>
             </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
+
+    <v-dialog v-model="dialogVisible" persistent max-width="300px">
+      <v-card class="d-flex flex-column align-center">
+        <v-card-title class="headline">Lembrete de Evento</v-card-title>
+        <v-card-text>{{ dialogMessage }}</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="green darken-1" text @click="dialogVisible = false">Fechar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -158,8 +170,11 @@ export default {
         { nome: 'Melancia', icone: 'mdi-fruit-watermelon' },
         { nome: 'Cenoura', icone: 'mdi-carrot' },
       ],
-      plantios: [], // Dados vindos da API
-      selectedPlantio: null
+      plantios: [],
+      eventos: [],
+      selectedPlantio: null,
+      dialogVisible: false,
+      dialogMessage: '',
     };
   },
   mounted() {
@@ -168,6 +183,8 @@ export default {
     const today = new Date()
     this.today = this.formatDateISO(today)
     this.fetchPlantio()
+    this.fetchColheita()
+    this.checkEventDates()
   },
   methods: {
     async fetchPlantio() {
@@ -177,6 +194,29 @@ export default {
         this.plantios = response.data;
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
+      }
+    },
+    async criarColheita() {
+      const url = "http://127.0.0.1:8000/api/eventos/";
+      const payload = {
+        tipo: `Colher ${this.plantaSelecionada}`,
+        data: this.formatDateISO(new Date(this.dataPlantioUsuario)),
+        quantidade_mudas: this.quantidadeSelecionada
+      };
+      try {
+        await axios.post(url, payload);
+        alert('Evento de colheita criado com sucesso!');
+      } catch (error) {
+        console.error('Erro ao criar o evento de colheita:', error);
+      }
+    },
+    async fetchColheita() {
+      const url = "http://127.0.0.1:8000/api/eventos/";
+      try {
+        const response = await axios.get(url);
+        this.eventos = response.data;
+      } catch (error) {
+        console.error('Erro ao pegar o evento de colheita:', error);
       }
     },
     selecionarPlanta(nome) {
@@ -262,6 +302,19 @@ export default {
     formatDateISO(date) {
       return date.toISOString().substr(0, 10);
     },
+    async checkEventDates() {
+      if (this.eventos.length <= 0) {
+        setTimeout(this.checkEventDates, 500);
+        return;
+      }
+      const today = new Date().toISOString().substring(0, 10);
+      this.eventos.forEach(event => {
+        if (event.data === today) {
+          this.dialogMessage = event.tipo;
+          this.dialogVisible = true;
+        }
+      });
+    }
   },
 };
 </script>

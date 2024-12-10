@@ -31,7 +31,7 @@
             @click="toggle"
           >
             <v-img :src="noticia.imgUrl" height="450px" cover></v-img>
-            <v-card-title class="text-center text-h6">{{ noticia.title }}</v-card-title>
+            <v-card-title class="text-center text-h6">{{ noticia.titulo }}</v-card-title>
             <v-card-actions>
               <v-btn
                 :href="noticia.url"
@@ -89,6 +89,7 @@
 
 <script>
 import emailjs from 'emailjs-com';
+import axios from 'axios';
 
 export default {
   name: 'ContactUs',
@@ -100,35 +101,47 @@ export default {
       dialog: false,
       model: 0, // Para o controle do slide group
       noticias: [
-        {
-          url: 'https://www.canalrural.com.br/tempo/frente-fria-traz-temporais-e-risco-de-geada-veja-quando-e-onde/',
-          title: 'Frente fria traz temporais e risco de geada; veja quando e onde',
-          imgUrl: 'https://imagens-cdn.canalrural.com.br/wp-content/uploads/IMG-20200715-WA0052.jpg',
-        },
-        {
-          url: 'https://www.canalrural.com.br/agricultura/projeto-soja-brasil/soja-confira-a-projecao-da-conab-para-a-safra-brasileira-24-25/',
-          title: 'Soja: confira a projeção da Conab para a safra brasileira 24/25',
-          imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/10/FOTOPARANA.png',
-        },
-        {
-          url: 'https://www.canalrural.com.br/noticias-trilha-da-soja/produtores-de-soja-se-preparam-para-o-clima-desfavoravel/',
-          title: 'Com uso de tecnologias, sojicultor fica mais preparado para enfrentar adversidades climáticas no Brasil',
-          imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/01/6_Lado-esquerdo-material-sentindo-seca-e-calor.jpeg',
-        },
-        {
-          url: 'https://www.canalrural.com.br/agricultura/conab-mantem-previsao-de-safra-recorde-de-graos-no-rio-grande-do-sul-para-2024-2025/',
-          title: 'Conab mantém previsão de safra recorde de grãos no Rio Grande do Sul para 2024/2025',
-          imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/08/08-2024-graos.jpg',
-        },
-        {
-          url: 'https://www.canalrural.com.br/agricultura/soja-milho-arroz-e-feijao-veja-as-condicoes-e-as-estimativas-de-produtividade/',
-          title: 'Soja, milho, arroz e feijão: veja as condições e as estimativas de produtividade',
-          imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/11/1731014049790467.jpg',
-        },
+        // {
+        //   url: 'https://www.canalrural.com.br/tempo/frente-fria-traz-temporais-e-risco-de-geada-veja-quando-e-onde/',
+        //   title: 'Frente fria traz temporais e risco de geada; veja quando e onde',
+        //   imgUrl: 'https://imagens-cdn.canalrural.com.br/wp-content/uploads/IMG-20200715-WA0052.jpg',
+        // },
+        // {
+        //   url: 'https://www.canalrural.com.br/agricultura/projeto-soja-brasil/soja-confira-a-projecao-da-conab-para-a-safra-brasileira-24-25/',
+        //   title: 'Soja: confira a projeção da Conab para a safra brasileira 24/25',
+        //   imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/10/FOTOPARANA.png',
+        // },
+        // {
+        //   url: 'https://www.canalrural.com.br/noticias-trilha-da-soja/produtores-de-soja-se-preparam-para-o-clima-desfavoravel/',
+        //   title: 'Com uso de tecnologias, sojicultor fica mais preparado para enfrentar adversidades climáticas no Brasil',
+        //   imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/01/6_Lado-esquerdo-material-sentindo-seca-e-calor.jpeg',
+        // },
+        // {
+        //   url: 'https://www.canalrural.com.br/agricultura/conab-mantem-previsao-de-safra-recorde-de-graos-no-rio-grande-do-sul-para-2024-2025/',
+        //   title: 'Conab mantém previsão de safra recorde de grãos no Rio Grande do Sul para 2024/2025',
+        //   imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/08/08-2024-graos.jpg',
+        // },
+        // {
+        //   url: 'https://www.canalrural.com.br/agricultura/soja-milho-arroz-e-feijao-veja-as-condicoes-e-as-estimativas-de-produtividade/',
+        //   title: 'Soja, milho, arroz e feijão: veja as condições e as estimativas de produtividade',
+        //   imgUrl: 'https://imagens-cdn.canalrural.com.br/2024/11/1731014049790467.jpg',
+        // },
       ],
     };
   },
+  mounted() {
+    this.fetchNoticias()
+  },
   methods: {
+    async fetchNoticias() {
+      const url = "http://127.0.0.1:8000/api/notificacoes/";
+      try {
+        const response = await axios.get(url);
+        this.noticias = response.data;
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+      }
+    },
     enviarEmail() {
       if (this.nome && this.titulo && this.mensagem) {
         // const templateParams = {

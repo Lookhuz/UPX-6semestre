@@ -4,7 +4,7 @@
       <v-col>
         <v-img
           class=""
-          width="900"
+          width="580"
           height="400px"
           aspect-ratio="16/9"
           cover
