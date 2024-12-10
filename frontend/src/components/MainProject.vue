@@ -61,7 +61,7 @@
         </div>
       </v-col>
 
-      <v-col cols="12" v-if="calendarioVisivel">
+      <v-col cols="12" v-if="calendarioVisivel && selectedPlantio">
         <v-card>
           <v-card-title>
             Calendário de Plantio para {{ plantaSelecionada }} em {{ cidadeSelecionada }}
@@ -78,9 +78,7 @@
             ></v-calendar>
             <div class="text-subtitle-1 mt-5">
               <span>
-                <strong>Dicas de Cultivo:</strong> {{
-                  dadosPlantio[cidadeSelecionada][plantaSelecionada].dicas
-                }}
+                <strong>Dicas de Cultivo:</strong> {{ selectedPlantio.dicas }}
               </span>
             </div>
             <div class="text-subtitle-1">
@@ -119,8 +117,9 @@
               ></v-date-picker>
             </v-menu>
             <div class="text-subtitle-1">
-              <span v-if="dataColheita">
-                <strong>Você poderá colher entre:</strong> {{ dataColheita }}
+              <span v-if="dataPlantioUsuario && selectedPlantio" class="text-h5">
+                <strong class="font-weight-bold">Você poderá colher entre:</strong>
+                {{ formatDate(new Date(dataPlantioUsuario)) }} e {{ formatDate(new Date(selectedPlantio.data_colheita)) }}
               </span>
             </div>
           </v-card-text>
@@ -132,6 +131,7 @@
 
 <script>
 import { useDate } from 'vuetify';
+import axios from 'axios';
 
 export default {
   name: 'MainProject',
@@ -146,10 +146,9 @@ export default {
       eventosCalendario: [],
       menu: false,
       dataPlantioUsuario: null,
-      dataColheita: '',
       startDate: null,
       endDate: null,
-      today: '', // Nova propriedade para a data atual
+      today: '',
       // Lista de plantas com ícones
       plantas: [
         { nome: 'Alface', icone: 'mdi-leaf' },
@@ -159,65 +158,27 @@ export default {
         { nome: 'Melancia', icone: 'mdi-fruit-watermelon' },
         { nome: 'Cenoura', icone: 'mdi-carrot' },
       ],
-      dadosPlantio: {
-        Sorocaba: {
-          Alface: {
-            epocaPlantio: { mesInicio: 3, mesFim: 9 }, // Março a Setembro
-            tempoColheita: { minDias: 35, maxDias: 70 },
-            dicas:
-              'O alface prefere solo fértil e bem drenado, com pH entre 6 e 7. É recomendável preparar o solo com matéria orgânica e irrigar regularmente, mas sem encharcar. Plantio ideal em locais com sol direto pela manhã e sombra parcial à tarde, especialmente no verão para evitar queimaduras nas folhas.',
-          },
-          Couve: {
-            epocaPlantio: { mesInicio: 3, mesFim: 8 }, // Março a Agosto
-            tempoColheita: { minDias: 60, maxDias: 90 },
-            dicas:
-              'A Cenoura se desenvolve bem em solo fértil, com pH entre 6 e 7,5. Prefere locais com sol pleno e solo úmido, mas bem drenado. É importante realizar a adubação com matéria orgânica e manter o solo sempre levemente úmido. Recomenda-se o plantio em canteiros elevados para evitar acúmulo de água.',
-          },
-        },
-        Ibiúna: {
-          Alface: {
-            epocaPlantio: { mesInicio: 2, mesFim: 9 }, // Fevereiro a Setembro
-            tempoColheita: { minDias: 30, maxDias: 65 },
-            dicas:
-              'Em Ibiúna, que tem clima mais ameno, o alface pode ser plantado ao longo de boa parte do ano. Prefere solo fértil e arenoso, com adição de matéria orgânica. Regas devem ser frequentes, especialmente durante períodos de seca, mas sem encharcar. Evite plantar durante os períodos mais frios do ano para não comprometer o crescimento.',
-          },
-          Couve: {
-            epocaPlantio: { mesInicio: 3, mesFim: 8 }, // Março a Agosto
-            tempoColheita: { minDias: 60, maxDias: 100 },
-            dicas:
-              'A Cenoura se adapta bem ao clima ameno de Ibiúna. É importante preparar o solo com composto orgânico e mantê-lo bem drenado. O cultivo em pleno sol é ideal, mas também pode ser feito em meia-sombra. Recomenda-se rega constante, sem deixar o solo encharcado. A Cenoura é uma planta que demanda nutrientes, portanto, adubação orgânica é recomendada ao longo do cultivo.',
-          },
-        },
-      },
+      plantios: [], // Dados vindos da API
+      selectedPlantio: null
     };
   },
   mounted() {
-    const adapter = useDate();
-    this.adapter = adapter;
-    // Definir a data atual no formato 'YYYY-MM-DD'
-    const today = new Date();
-    this.today = this.formatDateISO(today);
-  },
-  watch: {
-    dataPlantioUsuario(newVal) {
-      if (newVal && this.cidadeSelecionada && this.plantaSelecionada) {
-        const dados = this.dadosPlantio[this.cidadeSelecionada][this.plantaSelecionada];
-        const tempoColheita = dados.tempoColheita;
-        const dataPlantio = new Date(newVal);
-
-        const dataColheitaMin = new Date(dataPlantio);
-        dataColheitaMin.setDate(dataColheitaMin.getDate() + tempoColheita.minDias);
-
-        const dataColheitaMax = new Date(dataPlantio);
-        dataColheitaMax.setDate(dataColheitaMax.getDate() + tempoColheita.maxDias);
-
-        this.dataColheita = `entre ${this.formatDate(dataColheitaMin)} e ${this.formatDate(
-          dataColheitaMax
-        )}`;
-      }
-    },
+    const adapter = useDate()
+    this.adapter = adapter
+    const today = new Date()
+    this.today = this.formatDateISO(today)
+    this.fetchPlantio()
   },
   methods: {
+    async fetchPlantio() {
+      const url = "http://127.0.0.1:8000/api/plantios/";
+      try {
+        const response = await axios.get(url);
+        this.plantios = response.data;
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+      }
+    },
     selecionarPlanta(nome) {
       this.plantaSelecionada = nome;
     },
@@ -227,36 +188,50 @@ export default {
         this.mostrarCalendario();
       }
     },
+    getPlantaId(nome) {
+      const map = {
+        'Alface': 1,
+        'Rúcula': 2,
+        'Couve': 3,
+        'Milho': 4,
+        'Melancia': 5,
+        'Cenoura': 6
+      };
+      return map[nome] || null;
+    },
+    getCidadeId(nome) {
+      const map = {
+        'Sorocaba': 1,
+        'Votorantim': 2,
+        'Itu': 3,
+        'Araçoiaba': 5
+      };
+      return map[nome] || null;
+    },
     mostrarCalendario() {
-      if (
-        this.cidadeSelecionada &&
-        this.plantaSelecionada &&
-        this.quantidadeSelecionada
-      ) {
-        const dados = this.dadosPlantio[this.cidadeSelecionada][this.plantaSelecionada];
+      if (this.cidadeSelecionada && this.plantaSelecionada && this.quantidadeSelecionada) {
+        const cidadeId = this.getCidadeId(this.cidadeSelecionada);
+        const bandejaId = this.getPlantaId(this.plantaSelecionada);
 
-        // Obter a data atual e o ano atual
-        const today = new Date();
-        let currentYear = today.getFullYear();
-        const mesInicio = dados.epocaPlantio.mesInicio - 1; // Meses em JavaScript começam em 0
-        const mesFim = dados.epocaPlantio.mesFim - 1;
-
-        let dataInicioPlantio = new Date(currentYear, mesInicio, 1);
-        let dataFimPlantio = new Date(currentYear, mesFim + 1, 0); // Último dia do mês fim
-
-        // Se a data atual for após o fim da época de plantio, ajustar para o próximo ano
-        if (today > dataFimPlantio) {
-          currentYear += 1;
-          dataInicioPlantio = new Date(currentYear, mesInicio, 1);
-          dataFimPlantio = new Date(currentYear, mesFim + 1, 0);
+        if (!cidadeId || !bandejaId) {
+          alert('A cidade ou planta selecionada não está mapeada na API.');
+          return;
         }
 
-        // Se a data atual estiver dentro da época de plantio, mas após o início, ajustar dataInicioPlantio para hoje
-        if (today > dataInicioPlantio && today < dataFimPlantio) {
-          dataInicioPlantio = new Date(today);
+        const registro = this.plantios.find(item => 
+          item.cidade === cidadeId && item.bandeja === bandejaId
+        );
+
+        if (!registro) {
+          alert('Não há dados de plantio para esta cidade e planta.');
+          return;
         }
 
-        // Gerar eventos para cada dia no período de plantio
+        this.selectedPlantio = registro;
+
+        const dataInicioPlantio = new Date(registro.data_plantio);
+        const dataFimPlantio = new Date(registro.data_colheita);
+
         let eventosPlantio = [];
         let date = new Date(dataInicioPlantio);
         while (date <= dataFimPlantio) {
