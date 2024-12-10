@@ -33,20 +33,10 @@ class PlantioViewSet(viewsets.ModelViewSet):
 
 
 class NotificacaoViewSet(viewsets.ModelViewSet):
-    queryset = Notificacao.objects.select_related(
-        'plantio', 'mensagem', 'enviada', 'data_notificacao').all()
+    queryset = Notificacao.objects.all()
     serializer_class = NotificacaoSerializer
 
 
-class EventoAPIView(APIView):
-    def get(self, request):
-        eventos = Evento.objects.all()
-        serializer = EventoSerializer(eventos, many=True)
-        return Response(serializer.data)
-    
-    def post(self, request):
-        serializer = EventoSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class EventoViewSet(viewsets.ModelViewSet):
+    queryset = Evento.objects.all()
+    serializer_class = EventoSerializer

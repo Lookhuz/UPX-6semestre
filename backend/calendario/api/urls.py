@@ -5,7 +5,7 @@ from .views import (
     BandejaViewSet, 
     PlantioViewSet, 
     NotificacaoViewSet, 
-    EventoAPIView
+    EventoViewSet
 ) 
 
 # cal_router tem como função mapear os viewsets exclusivamente
@@ -14,9 +14,9 @@ cal_router.register(r'culturas', CulturaViewSet)
 cal_router.register(r'bandejas', BandejaViewSet)
 cal_router.register(r'plantios', PlantioViewSet)
 cal_router.register(r'notificacoes', NotificacaoViewSet)
+cal_router.register(r'eventos', EventoViewSet)
 
 # como APIView não funciona com DefaultRouter, é necessário mapear manualmente
 urlpatterns = [
     path('', include(cal_router.urls)),
-    path('eventos/', EventoAPIView.as_view(), name='eventos'),  
 ]
